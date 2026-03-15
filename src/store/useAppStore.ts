@@ -12,6 +12,12 @@ interface AppStore {
   currentMatchId: string | null;
   activePage: string;
   teamName: string;
+  teamCode: string | null;
+  _isRemoteUpdate: boolean;
+
+  // Sync actions
+  setTeamCode: (code: string) => void;
+  _setFromRemote: (data: { players: unknown[]; matches: unknown[]; teamName: string }) => void;
 
   // Team actions
   addPlayer: (data: Omit<Player, 'id' | 'stats'>) => void;
@@ -45,6 +51,14 @@ export const useAppStore = create<AppStore>()(
       currentMatchId: null,
       activePage: 'dashboard',
       teamName: 'VolleyTeam',
+      teamCode: null,
+      _isRemoteUpdate: false,
+
+      setTeamCode: (code) => set({ teamCode: code, activePage: 'dashboard' }),
+      _setFromRemote: (data) => {
+        set({ _isRemoteUpdate: true, players: data.players as Player[], matches: data.matches as Match[], teamName: data.teamName })
+        setTimeout(() => set({ _isRemoteUpdate: false }), 200)
+      },
 
       setTeamName: (name) => set({ teamName: name }),
 
@@ -326,6 +340,7 @@ export const useAppStore = create<AppStore>()(
         matches: state.matches,
         currentMatchId: state.currentMatchId,
         teamName: state.teamName,
+        teamCode: state.teamCode,
       }),
     }
   )
