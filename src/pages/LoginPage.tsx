@@ -50,8 +50,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-gray-950 flex items-start justify-center p-4 overflow-y-auto">
+      <div className="w-full max-w-sm my-auto pt-8 pb-8">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Volleyball size={32} className="text-white" />
