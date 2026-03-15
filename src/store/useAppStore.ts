@@ -24,6 +24,7 @@ interface AppStore {
   updatePlayer: (player: Player) => void;
   deletePlayer: (id: string) => void;
   updatePlayerStats: (playerId: string, stats: Partial<PlayerStats>) => void;
+  incrementPlayerStats: (playerId: string, delta: Partial<PlayerStats>) => void;
   setTeamName: (name: string) => void;
 
   // Match actions
@@ -88,6 +89,19 @@ export const useAppStore = create<AppStore>()(
           players: s.players.map((p) =>
             p.id === playerId ? { ...p, stats: { ...p.stats, ...stats } } : p
           ),
+        }));
+      },
+
+      incrementPlayerStats: (playerId, delta) => {
+        set((s) => ({
+          players: s.players.map((p) => {
+            if (p.id !== playerId) return p;
+            const updated = { ...p.stats };
+            (Object.keys(delta) as (keyof PlayerStats)[]).forEach((key) => {
+              updated[key] = (updated[key] ?? 0) + (delta[key] ?? 0);
+            });
+            return { ...p, stats: updated };
+          }),
         }));
       },
 
@@ -168,11 +182,24 @@ export const useAppStore = create<AppStore>()(
       },
 
       finishMatch: () => {
-        const { currentMatchId } = get();
+        const { currentMatchId, matches } = get();
         if (!currentMatchId) return;
+        const match = matches.find((m) => m.id === currentMatchId);
+        if (!match) return;
+        const participantIds = new Set<string>();
+        match.lineup.forEach((id) => { if (id) participantIds.add(id); });
+        match.substitutions.forEach((sub) => {
+          participantIds.add(sub.inPlayerId);
+          participantIds.add(sub.outPlayerId);
+        });
         set((s) => ({
           matches: s.matches.map((m) =>
             m.id === currentMatchId ? { ...m, status: 'finished' } : m
+          ),
+          players: s.players.map((p) =>
+            participantIds.has(p.id)
+              ? { ...p, stats: { ...p.stats, matchesPlayed: p.stats.matchesPlayed + 1 } }
+              : p
           ),
         }));
       },

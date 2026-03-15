@@ -13,8 +13,20 @@ import {
   Volleyball,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
-import type { Match } from '../types';
+import type { Match, PlayerStats } from '../types';
 import { POSITION_COLORS, POSITION_SHORT } from '../types';
+
+const STAT_ACTIONS: { label: string; sub: string; color: string; delta: Partial<PlayerStats> }[] = [
+  { label: 'サーブIN', sub: '試み', color: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30', delta: { serveAttempts: 1 } },
+  { label: 'エース', sub: '得点', color: 'bg-yellow-500 text-white border border-transparent', delta: { serveAttempts: 1, serveAce: 1 } },
+  { label: 'サーブミス', sub: 'フォルト', color: 'bg-slate-700 text-slate-300 border border-slate-600', delta: { serveAttempts: 1, serveFault: 1 } },
+  { label: 'スパイク', sub: '試み', color: 'bg-blue-500/20 text-blue-300 border border-blue-500/30', delta: { attackAttempts: 1 } },
+  { label: '決定', sub: '得点', color: 'bg-blue-500 text-white border border-transparent', delta: { attackAttempts: 1, attackKill: 1 } },
+  { label: 'スパイクミス', sub: 'アウト', color: 'bg-slate-700 text-slate-300 border border-slate-600', delta: { attackAttempts: 1, attackFault: 1 } },
+  { label: 'ブロック', sub: '得点', color: 'bg-purple-500 text-white border border-transparent', delta: { blockPoint: 1 } },
+  { label: 'レセプ', sub: '成功', color: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30', delta: { receiveAttempts: 1, receiveGood: 1 } },
+  { label: 'ディグ', sub: '守備', color: 'bg-slate-600 text-slate-200 border border-slate-500', delta: { dig: 1 } },
+];
 import { CourtView } from '../components/Court/CourtView';
 import { AIPanel } from '../components/Match/AIPanel';
 import { Modal } from '../components/UI/Modal';
@@ -341,11 +353,12 @@ function MatchSetup({ match }: { match: Match }) {
 
 // ─── Active Match ─────────────────────────────────────────────────────────────
 function ActiveMatch({ match }: { match: Match }) {
-  const { players, rotate, scorePoint, makeSubstitution, makeLiberoSwap, useTimeout, endSet, finishMatch, setCurrentMatch } = useAppStore();
+  const { players, rotate, scorePoint, makeSubstitution, makeLiberoSwap, useTimeout, endSet, finishMatch, setCurrentMatch, incrementPlayerStats } = useAppStore();
   const [subOutSlot, setSubOutSlot] = useState<number | null>(null);
   const [subInPlayerId, setSubInPlayerId] = useState<string | null>(null);
   const [showEndSetModal, setShowEndSetModal] = useState(false);
   const [showFinishModal, setShowFinishModal] = useState(false);
+  const [selectedStatPlayerId, setSelectedStatPlayerId] = useState<string | null>(null);
 
   const playerMap = new Map(players.map((p) => [p.id, p]));
   const onCourtIds = new Set(match.lineup.filter(Boolean) as string[]);
@@ -613,6 +626,53 @@ function ActiveMatch({ match }: { match: Match }) {
             <RotateCcw size={18} />
             サイドアウト → ローテーション
           </button>
+
+          {/* Stats Quick Input */}
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-3">
+            <p className="text-xs font-bold text-slate-400 mb-2">スタッツ記録</p>
+            {/* On-court player selector */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {(match.lineup.filter(Boolean) as string[]).map((pid) => {
+                const p = playerMap.get(pid);
+                if (!p) return null;
+                const isSelected = selectedStatPlayerId === pid;
+                return (
+                  <button
+                    key={pid}
+                    onClick={() => setSelectedStatPlayerId(isSelected ? null : pid)}
+                    className="flex flex-col items-center gap-0.5"
+                  >
+                    <span className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-black transition-all ${POSITION_COLORS[p.position]} ${isSelected ? 'ring-2 ring-white scale-110' : 'opacity-70 hover:opacity-100'}`}>
+                      {p.number}
+                    </span>
+                    <span className="text-[9px] text-slate-500">{p.name.split(' ')[0]}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedStatPlayerId ? (
+              <>
+                <p className="text-[10px] text-emerald-400 font-bold mb-2">
+                  #{playerMap.get(selectedStatPlayerId)?.number} {playerMap.get(selectedStatPlayerId)?.name}
+                </p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {STAT_ACTIONS.map(({ label, sub, color, delta }) => (
+                    <button
+                      key={label}
+                      onClick={() => incrementPlayerStats(selectedStatPlayerId, delta)}
+                      className={`py-2 px-1 rounded-lg text-xs font-bold ${color} transition-all active:scale-95 flex flex-col items-center`}
+                    >
+                      <span>{label}</span>
+                      <span className="text-[9px] opacity-70">{sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-[10px] text-slate-600 text-center py-1">↑ 選手番号を選択してスタッツを記録</p>
+            )}
+          </div>
         </div>
 
         {/* Right: Controls + AI */}
