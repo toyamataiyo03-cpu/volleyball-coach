@@ -16,16 +16,32 @@ import { useAppStore } from '../store/useAppStore';
 import type { Match, PlayerStats } from '../types';
 import { POSITION_COLORS, POSITION_SHORT } from '../types';
 
-const STAT_ACTIONS: { label: string; sub: string; color: string; delta: Partial<PlayerStats> }[] = [
-  { label: 'サーブIN', sub: '試み', color: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30', delta: { serveAttempts: 1 } },
-  { label: 'エース', sub: '得点', color: 'bg-yellow-500 text-white border border-transparent', delta: { serveAttempts: 1, serveAce: 1 } },
-  { label: 'サーブミス', sub: 'フォルト', color: 'bg-slate-700 text-slate-300 border border-slate-600', delta: { serveAttempts: 1, serveFault: 1 } },
-  { label: 'スパイク', sub: '試み', color: 'bg-blue-500/20 text-blue-300 border border-blue-500/30', delta: { attackAttempts: 1 } },
-  { label: '決定', sub: '得点', color: 'bg-blue-500 text-white border border-transparent', delta: { attackAttempts: 1, attackKill: 1 } },
-  { label: 'スパイクミス', sub: 'アウト', color: 'bg-slate-700 text-slate-300 border border-slate-600', delta: { attackAttempts: 1, attackFault: 1 } },
-  { label: 'ブロック', sub: '得点', color: 'bg-purple-500 text-white border border-transparent', delta: { blockPoint: 1 } },
-  { label: 'レセプ', sub: '成功', color: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30', delta: { receiveAttempts: 1, receiveGood: 1 } },
-  { label: 'ディグ', sub: '守備', color: 'bg-slate-600 text-slate-200 border border-slate-500', delta: { dig: 1 } },
+type StatAction = { label: string; sub: string; btnColor: string; countKey: keyof PlayerStats; delta: Partial<PlayerStats> };
+const STAT_GROUPS: { category: string; headerColor: string; dotColor: string; actions: StatAction[] }[] = [
+  {
+    category: 'サーブ', headerColor: 'text-yellow-400', dotColor: 'bg-yellow-400',
+    actions: [
+      { label: 'サーブIN', sub: '試み', btnColor: 'bg-yellow-500/20 text-yellow-200 border border-yellow-500/40 hover:bg-yellow-500/30', countKey: 'serveAttempts', delta: { serveAttempts: 1 } },
+      { label: 'エース', sub: '直接得点', btnColor: 'bg-yellow-500 text-white border border-transparent hover:bg-yellow-400', countKey: 'serveAce', delta: { serveAttempts: 1, serveAce: 1 } },
+      { label: 'ミス', sub: 'フォルト', btnColor: 'bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600', countKey: 'serveFault', delta: { serveAttempts: 1, serveFault: 1 } },
+    ],
+  },
+  {
+    category: 'スパイク', headerColor: 'text-blue-400', dotColor: 'bg-blue-400',
+    actions: [
+      { label: 'スパイク', sub: '打数', btnColor: 'bg-blue-500/20 text-blue-200 border border-blue-500/40 hover:bg-blue-500/30', countKey: 'attackAttempts', delta: { attackAttempts: 1 } },
+      { label: '決定', sub: '直接得点', btnColor: 'bg-blue-500 text-white border border-transparent hover:bg-blue-400', countKey: 'attackKill', delta: { attackAttempts: 1, attackKill: 1 } },
+      { label: 'ミス', sub: 'アウト', btnColor: 'bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600', countKey: 'attackFault', delta: { attackAttempts: 1, attackFault: 1 } },
+    ],
+  },
+  {
+    category: 'その他', headerColor: 'text-slate-400', dotColor: 'bg-slate-400',
+    actions: [
+      { label: 'ブロック', sub: '得点', btnColor: 'bg-purple-500 text-white border border-transparent hover:bg-purple-400', countKey: 'blockPoint', delta: { blockPoint: 1 } },
+      { label: 'レセプション', sub: '成功', btnColor: 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/30', countKey: 'receiveGood', delta: { receiveAttempts: 1, receiveGood: 1 } },
+      { label: 'ディグ', sub: '守備', btnColor: 'bg-slate-600 text-slate-100 border border-slate-500 hover:bg-slate-500', countKey: 'dig', delta: { dig: 1 } },
+    ],
+  },
 ];
 import { CourtView } from '../components/Court/CourtView';
 import { AIPanel } from '../components/Match/AIPanel';
@@ -629,7 +645,15 @@ function ActiveMatch({ match }: { match: Match }) {
 
           {/* Stats Quick Input */}
           <div className="bg-slate-800 rounded-xl border border-slate-700 p-3">
-            <p className="text-xs font-bold text-slate-400 mb-2">スタッツ記録</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-slate-300">スタッツ記録</p>
+              {selectedStatPlayerId && (
+                <button onClick={() => setSelectedStatPlayerId(null)} className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors">
+                  選択解除
+                </button>
+              )}
+            </div>
+
             {/* On-court player selector */}
             <div className="flex flex-wrap gap-2 mb-3">
               {(match.lineup.filter(Boolean) as string[]).map((pid) => {
@@ -640,37 +664,69 @@ function ActiveMatch({ match }: { match: Match }) {
                   <button
                     key={pid}
                     onClick={() => setSelectedStatPlayerId(isSelected ? null : pid)}
-                    className="flex flex-col items-center gap-0.5"
+                    className={`flex flex-col items-center gap-0.5 transition-transform ${isSelected ? 'scale-115' : ''}`}
                   >
-                    <span className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-black transition-all ${POSITION_COLORS[p.position]} ${isSelected ? 'ring-2 ring-white scale-110' : 'opacity-70 hover:opacity-100'}`}>
+                    <span className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black transition-all ${POSITION_COLORS[p.position]} ${isSelected ? 'ring-2 ring-white ring-offset-1 ring-offset-slate-800 shadow-lg' : 'opacity-55 hover:opacity-90'}`}>
                       {p.number}
                     </span>
-                    <span className="text-[9px] text-slate-500">{p.name.split(' ')[0]}</span>
+                    <span className={`text-[9px] font-medium transition-colors ${isSelected ? 'text-white' : 'text-slate-500'}`}>{p.name.split(' ')[0]}</span>
                   </button>
                 );
               })}
             </div>
 
-            {selectedStatPlayerId ? (
-              <>
-                <p className="text-[10px] text-emerald-400 font-bold mb-2">
-                  #{playerMap.get(selectedStatPlayerId)?.number} {playerMap.get(selectedStatPlayerId)?.name}
-                </p>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {STAT_ACTIONS.map(({ label, sub, color, delta }) => (
-                    <button
-                      key={label}
-                      onClick={() => incrementPlayerStats(selectedStatPlayerId, delta)}
-                      className={`py-2 px-1 rounded-lg text-xs font-bold ${color} transition-all active:scale-95 flex flex-col items-center`}
-                    >
-                      <span>{label}</span>
-                      <span className="text-[9px] opacity-70">{sub}</span>
-                    </button>
+            {selectedStatPlayerId ? (() => {
+              const sp = playerMap.get(selectedStatPlayerId)!;
+              return (
+                <>
+                  {/* Selected player banner */}
+                  <div className={`flex items-center gap-2 mb-3 rounded-lg px-2 py-1.5 bg-slate-700/60 border border-slate-600`}>
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-black flex-shrink-0 ${POSITION_COLORS[sp.position]}`}>
+                      {sp.number}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{sp.name}</p>
+                      <p className="text-[10px] text-slate-400">{POSITION_SHORT[sp.position]}</p>
+                    </div>
+                    <p className="text-[10px] text-slate-500">記録中</p>
+                  </div>
+
+                  {/* Grouped stat buttons */}
+                  {STAT_GROUPS.map(({ category, headerColor, dotColor, actions }) => (
+                    <div key={category} className="mb-2.5">
+                      <p className={`text-[10px] font-bold ${headerColor} mb-1.5 flex items-center gap-1`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${dotColor} inline-block`} />
+                        {category}
+                      </p>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {actions.map(({ label, sub, btnColor, countKey, delta }) => {
+                          const count = sp.stats[countKey] as number ?? 0;
+                          return (
+                            <button
+                              key={label}
+                              onClick={() => incrementPlayerStats(selectedStatPlayerId, delta)}
+                              className={`py-2.5 px-1 rounded-lg text-xs font-bold ${btnColor} transition-all active:scale-90 flex flex-col items-center gap-0.5 relative`}
+                            >
+                              <span className="text-[11px] font-bold leading-tight">{label}</span>
+                              <span className="text-[9px] opacity-60">{sub}</span>
+                              {count > 0 && (
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-slate-900 border border-slate-600 rounded-full text-[9px] text-slate-300 font-bold flex items-center justify-center">
+                                  {count}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   ))}
-                </div>
-              </>
-            ) : (
-              <p className="text-[10px] text-slate-600 text-center py-1">↑ 選手番号を選択してスタッツを記録</p>
+                </>
+              );
+            })() : (
+              <div className="text-center py-3 border border-dashed border-slate-700 rounded-lg">
+                <p className="text-[11px] text-slate-400">上の番号をタップして選手を選択</p>
+                <p className="text-[10px] text-slate-600 mt-0.5">選択するとスタッツが記録できます</p>
+              </div>
             )}
           </div>
         </div>

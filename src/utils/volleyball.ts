@@ -1,10 +1,9 @@
 import type { PlayerStats } from '../types';
 
-// Rotate lineup clockwise: pos 1 player becomes pos 6, pos 2 becomes pos 1, etc.
-// When receiving team wins rally, all players rotate one step clockwise
-// New order: [was_pos2, was_pos3, was_pos4, was_pos5, was_pos6, was_pos1]
+// Rotate lineup clockwise (as seen on screen, net at top):
+// ②→① ③→② ④→③ ⑤→④ ⑥→⑤ ①→⑥
 export function rotateLineup(lineup: (string | null)[]): (string | null)[] {
-  return [lineup[5], lineup[0], lineup[1], lineup[2], lineup[3], lineup[4]];
+  return [lineup[1], lineup[2], lineup[3], lineup[4], lineup[5], lineup[0]];
 }
 
 export function getServeRate(stats: PlayerStats): number {
