@@ -168,7 +168,7 @@ export function PlayerForm({ initialData, onSubmit, onCancel }: PlayerFormProps)
                 : 'bg-slate-700 border-slate-600 text-slate-400'
             }`}
           >
-            {isLibero || position === 'L' ? 'リベロ ✓' : 'リベロではない'}
+            {isLibero || position === 'L' ? 'リベロ ✓' : '通常選手'}
           </button>
         </div>
       </div>

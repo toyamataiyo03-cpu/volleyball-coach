@@ -118,8 +118,8 @@ export function generateAISuggestions(
         id: uuidv4(),
         priority: 'high',
         type: 'substitution',
-        message: `大量リード許容中 - 積極的な交代で流れを変えろ`,
-        detail: `現在 ${match.myScore}-${match.opponentScore}。残り交代: ${match.maxSubs - match.subsUsed}回`,
+        message: `大量リードを許しています (${match.myScore}-${match.opponentScore})`,
+        detail: `積極的な交代で流れを変えましょう。残り交代: ${match.maxSubs - match.subsUsed}回`,
       });
     }
   }

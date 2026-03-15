@@ -528,7 +528,7 @@ function ActiveMatch({ match }: { match: Match }) {
               {subInPlayerId ? (
                 <div className="space-y-1">
                   <p className="text-[10px] text-slate-400">
-                    P{subOutSlot + 1} の選手と交代
+                    ポジション{subOutSlot + 1}の選手と交代
                   </p>
                   <button
                     onClick={confirmSubstitution}
@@ -546,8 +546,8 @@ function ActiveMatch({ match }: { match: Match }) {
                 </div>
               ) : (
                 <div>
-                  <p className="text-[10px] text-emerald-400">P{subOutSlot + 1} 選択済</p>
-                  <p className="text-[10px] text-slate-500">ベンチから選手を選択</p>
+                  <p className="text-[10px] text-emerald-400">ポジション{subOutSlot + 1}を選択中</p>
+                  <p className="text-[10px] text-slate-500">ベンチから交代選手を選択</p>
                   <button
                     onClick={() => setSubOutSlot(null)}
                     className="mt-1 w-full py-1.5 bg-slate-700 text-slate-400 rounded-lg text-xs"
@@ -617,7 +617,7 @@ function ActiveMatch({ match }: { match: Match }) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-bold text-slate-400">
-                {subOutSlot !== null ? `交代: ポジション${subOutSlot + 1}をタップ済` : 'コートをタップして交代選択'}
+                {subOutSlot !== null ? `ポジション${subOutSlot + 1}を選択中` : 'コートをタップして交代選手を選択'}
               </p>
               <div className="flex items-center gap-1">
                 <ArrowLeftRight size={12} className="text-slate-500" />

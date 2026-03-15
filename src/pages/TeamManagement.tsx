@@ -162,7 +162,7 @@ export function TeamManagement() {
                 攻撃 <SortIcon field="attack" />
               </button>
               <button onClick={() => handleSort('receive')} className="col-span-2 flex items-center gap-1 hover:text-white">
-                受信 <SortIcon field="receive" />
+                レセプ <SortIcon field="receive" />
               </button>
             </div>
 

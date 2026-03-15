@@ -110,7 +110,7 @@ export function Dashboard() {
               {new Set(players.map((p) => p.position)).size}
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              全{players.filter((p) => !p.isLibero).length}人が使用可能
+              全{players.filter((p) => !p.isLibero).length}人が出場可能
             </div>
           </div>
         </div>
