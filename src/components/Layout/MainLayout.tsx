@@ -5,8 +5,10 @@ import {
   Trophy,
   BarChart3,
   Volleyball,
+  LogOut,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { supabase, isSupabaseConfigured } from '../../supabase';
 
 interface NavItem {
   id: string;
@@ -26,7 +28,12 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const { activePage, setActivePage, teamName } = useAppStore();
+  const { activePage, setActivePage, teamName, setTeamCode } = useAppStore();
+
+  async function handleLogout() {
+    if (isSupabaseConfigured) await supabase.auth.signOut()
+    setTeamCode(null)
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-900">
@@ -68,10 +75,19 @@ export function MainLayout({ children }: MainLayoutProps) {
           })}
         </nav>
 
-        {/* Version */}
-        <div className="hidden lg:block p-4 border-t border-slate-800">
-          <p className="text-xs text-slate-600">VolleyCoach v1.0</p>
-          <p className="text-xs text-slate-600">DataVolley基準</p>
+        {/* Logout + Version */}
+        <div className="p-3 border-t border-slate-800">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all duration-150"
+          >
+            <LogOut size={22} className="flex-shrink-0" />
+            <span className="hidden lg:block text-sm font-medium">ログアウト</span>
+          </button>
+          <div className="hidden lg:block mt-2 px-1">
+            <p className="text-xs text-slate-600">VolleyCoach v1.0</p>
+            <p className="text-xs text-slate-600">DataVolley基準</p>
+          </div>
         </div>
       </aside>
 

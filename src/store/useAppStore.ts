@@ -16,7 +16,7 @@ interface AppStore {
   _isRemoteUpdate: boolean;
 
   // Sync actions
-  setTeamCode: (code: string) => void;
+  setTeamCode: (code: string | null) => void;
   _setFromRemote: (data: { players: unknown[]; matches: unknown[]; teamName: string }) => void;
 
   // Team actions
@@ -54,7 +54,7 @@ export const useAppStore = create<AppStore>()(
       teamCode: null,
       _isRemoteUpdate: false,
 
-      setTeamCode: (code) => set({ teamCode: code, activePage: 'dashboard' }),
+      setTeamCode: (code) => set({ teamCode: code, activePage: code ? 'dashboard' : 'dashboard' }),
       _setFromRemote: (data) => {
         set({ _isRemoteUpdate: true, players: data.players as Player[], matches: data.matches as Match[], teamName: data.teamName })
         setTimeout(() => set({ _isRemoteUpdate: false }), 200)
